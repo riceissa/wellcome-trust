@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# License: CC0
+# License: CC0 https://creativecommons.org/publicdomain/zero/1.0/
 
 import csv
 
