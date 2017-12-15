@@ -28,7 +28,9 @@ def main():
         affected_regions) values""")
 
         for row in reader:
-            donee = row['Organisation']
+            donee = row['Organisation'].strip()
+            if donee == "No Organisation":
+                donee = row['Lead Applicant'].strip()
             # FIXME this is in pounds
             amount = row[' Amount awarded (£) '].replace(",", "").strip()
             # There is also "Financial year", "Start Date", and "End Date"
