@@ -2,6 +2,7 @@
 # License: CC0 https://creativecommons.org/publicdomain/zero/1.0/
 
 import csv
+import requests
 
 def mysql_quote(x):
     '''
@@ -25,17 +26,19 @@ def main():
         print("""insert into donations (donor, donee, amount, donation_date,
         donation_date_precision, donation_date_basis, cause_area, url,
         donor_cause_area_url, notes, affected_countries,
-        affected_regions) values""")
+        affected_regions, amount_original_currency, original_currency,
+        currency_conversion_date, currency_conversion_basis) values""")
 
         for row in reader:
             donee = row['Organisation'].strip()
             if donee == "No Organisation":
                 donee = row['Lead Applicant'].strip()
-            # FIXME this is in pounds
-            amount = row[' Amount awarded (£) '].replace(",", "").strip()
             # There is also "Financial year", "Start Date", and "End Date"
             day, month, year = row['Date of Award'].split('/')
             donation_date = year + "-" + month + "-" + day
+            amount_original = float(row[' Amount awarded (£) '].replace(",", "")
+                                                               .strip())
+            amount = gbp_to_usd(amount_original, donation_date)
             notes = row['Project title']
             country = row['Country']
 
@@ -49,7 +52,7 @@ def main():
             print(("    " if first else "    ,") + "(" + ",".join([
                 mysql_quote("Wellcome Trust"),  # donor
                 mysql_quote(donee),  # donee
-                amount,  # amount
+                str(amount),  # amount
                 mysql_quote(donation_date),  # donation_date
                 mysql_quote("day"),  # donation_date_precision
                 mysql_quote("donation log"),  # donation_date_basis
@@ -59,9 +62,21 @@ def main():
                 mysql_quote(notes),  # notes
                 mysql_quote(country),  # affected_countries
                 mysql_quote(region),  # affected_regions
+                str(amount_original),  # amount_original_currency
+                mysql_quote('GBP'),  # original_currency
+                mysql_quote(donation_date),  # currency_conversion_date
+                mysql_quote("Fixer.io"),  # currency_conversion_basis
             ]) + ")")
             first = False
         print(";")
+
+
+def gbp_to_usd(gbp_amount, date):
+    """Convert the GBP amount to USD."""
+    r = requests.get("https://api.fixer.io/{}?base=USD".format(date))
+    j = r.json()
+    rate = j["rates"]["GBP"]
+    return gbp_amount / rate
 
 
 if __name__ == "__main__":
