@@ -3,6 +3,7 @@
 
 import csv
 import requests
+import re
 
 def mysql_quote(x):
     '''
@@ -48,6 +49,13 @@ def main():
                 country = " ".join(map(lambda x: x[0] + x[1:].lower(),
                                        country.strip().split()))
             region = row['Region']
+
+            # This is to make sure that each country/region is just a single
+            # location rather than multiple. (If there are multiple, we would
+            # need to separate them by pipes, so passing this assertion allows
+            # us to skip that step.)
+            for loc in [country, region]:
+                assert re.match(r"[A-Za-z ]+", loc), loc
 
             print(("    " if first else "    ,") + "(" + ",".join([
                 mysql_quote("Wellcome Trust"),  # donor
